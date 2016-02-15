@@ -2,11 +2,11 @@
 #include "pitches.h"
 
 //                 &     4     &   1  &   2  &   3      &     4     &  1   &  2  &  3  &     4     &
-//                 8,    8,    4    , r8, r4    r8,   as8,  as8,   f4     r8, r4    r4       eb4
+//                 8     8     4      r8  r4    r8    as8   as8    f4     r8  r4    r4       eb4
 int melody[] = {PAS5, PAS5, PDS6    , 0,  0,     0,  PAS5, PAS5,  PF6    , 0, 0   , 0   , PDS6      ,
 
 //  1    &     2  &     3       &  4      &  1  &  2  &  3 ...
-//  c8  c8    c4       c8     eb4        f4    r8 r4    r8 ...
+// c8   c8    c4       c8     eb4        f4    r8 r4    r8 ...
   PC6, PC6,  PC6   ,  PC6  , PD6    , PDS6    , 0, 0,    0
 };
 
@@ -14,47 +14,17 @@ int melody[] = {PAS5, PAS5, PDS6    , 0,  0,     0,  PAS5, PAS5,  PF6    , 0, 0 
 int rhythm[] = {8, 8, 4   , 8, 4               , 8,   8,     8,     4   , 8,   4   , 4,        4,
      8,  8,    4,      8,      4,        4,     8, 4,     8 // ...
 };
-/* Sleep Demo Serial
- * -----------------
- * Example code to demonstrate the sleep functions in an Arduino.
- *
- * use a resistor between RX and pin2. By default RX is pulled up to 5V
- * therefore, we can use a sequence of Serial data forcing RX to 0, what
- * will make pin2 go LOW activating INT0 external interrupt, bringing
- * the MCU back to life
- *
- * there is also a time counter that will put the MCU to sleep after 10 secs
- *
- * NOTE: when coming back from POWER-DOWN mode, it takes a bit
- *       until the system is functional at 100%!! (typically <1sec)
- *
- * Copyright (C) 2006 MacSimski 2006-12-30
- * Copyright (C) 2007 D. Cuartielles 2007-07-08 - Mexico DF
- *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
 
-int wakePin = 2;                 // pin used for waking up
+int moisturePin = 2;             // pin used for waking up
 int alarmPin = 9;                // PWM pin to drive a piezo
 int sleepStatus = 0;             // variable to store a request for sleep
 int count = 0;                   // counter
 bool doAlarm = false;
-void wakeUpNow()        // here the interrupt is handled after wakeup
-{
+
+void onWake() {
     // execute code here after wake-up before returning to the loop() function
     // timers and code using timers (serial.print and more...) will not work here.
+
     doAlarm = true;
 }
 
@@ -78,29 +48,12 @@ void playMelody() {
 }
 
 void setup() {
-    pinMode(wakePin, INPUT_PULLUP);
+    pinMode(moisturePin, INPUT_PULLUP);
     
-    Serial.begin(19200);
+    Serial.begin(19200); // The pro mini 3.3V worked when I used 19200 here and 9600 in the monitor
     Serial.println("begin setup...");
 
-
-    /* Now it is time to enable an interrupt. In the function call
-     * attachInterrupt(A, B, C)
-     * A   can be either 0 or 1 for interrupts on pin 2 or 3.  
-     *
-     * B   Name of a function you want to execute while in interrupt A.
-     *
-     * C   Trigger mode of the interrupt pin. can be:
-     *             LOW        a low level trigger
-     *             CHANGE     a change in level trigger
-     *             RISING     a rising edge of a level trigger
-     *             FALLING    a falling edge of a level trigger
-     *
-     * In all but the IDLE sleep modes only LOW can be used.
-     */
-
-    attachInterrupt(0, wakeUpNow, LOW); // use interrupt 0 (pin 2) and run function
-    // wakeUpNow when pin 2 gets LOW
+    attachInterrupt(0, onWake, LOW);
     
     Serial.println("end setup...");
 }
@@ -143,8 +96,7 @@ void alarmStop() {
 
 
 
-void sleepNow()         // here we put the arduino to sleep
-{
+void sleepNow() {
     /* Now is the time to set the sleep mode. In the Atmega8 datasheet
      * http://www.atmel.com/dyn/resources/prod_documents/doc2486.pdf on page 35
      * there is a list of sleep modes which explains which clocks and
@@ -189,17 +141,16 @@ void sleepNow()         // here we put the arduino to sleep
      * In all but the IDLE sleep modes only LOW can be used.
      */
 
-    attachInterrupt(digitalPinToInterrupt(2),wakeUpNow, LOW); // use interrupt 0 (pin 2) and run function
-    // wakeUpNow when pin 2 gets LOW
+    attachInterrupt(digitalPinToInterrupt(moisturePin), onWake, LOW); 
+    sleep_mode();
 
-    sleep_mode();            // here the device is actually put to sleep!!
-    // THE PROGRAM CONTINUES FROM HERE AFTER WAKING UP
+    // ***********************************************************
+    // SKETCH CONTINUES FROM HERE AFTER WAKING UP
+    // ***********************************************************
 
     sleep_disable();         // first thing after waking from sleep:
     // disable sleep...
     detachInterrupt(0);      // disables interrupt 0 on pin 2 so the
-    // wakeUpNow code will not be executed
+    // onWake code will not be executed
     // during normal running time.
-
 }
-

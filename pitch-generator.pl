@@ -13,14 +13,17 @@ my $lowest_a = 27.50;
 # The half-step is perceived by he human ear logarithmically. 
 #
 # The difference in frequency between A and A-sharp is then the frequency of A
-# multiplied by 2 multiplied the twelfth root of 2. 
+# multiplied by the twelfth root of 2.
 # If we know the frequency of A, then we can mathematically compute the (equal temperament) frequency of A-sharp thus:
-#      half_step_count = 1     # number of half-steps between a and a#
-#      asharp_freq = 2 * (2**(half_step_count/12)) * a_freq
+#      a4_freq = 440; // Hz
+#      asharp4_freq = 2 * (2**(1/12)) * a4_freq
+# (We express the twelfth root of 2 as 2 to its 1/12th power.)
 #
-# A difference of a major 3rd, (4 half steps), would be similarly computed thus:
-#      half_step_count = 4     # number of half-steps between a and c#
-#      csharp_freq = 2 * (2**(half_step_count/12)) * a_freq
+# We can easily go outward from here to get the value of any pitch class if we know the number 
+# of half steps between it and the reference pitch frequency, by multiplying by the (n/12)th power of 2
+# A difference of a major 3rd is 4 half steps. Therefore:
+#      n = 4     # number of half-steps between a and c#
+#      csharp_freq = (2**(n/12)) * a_freq
 #
 $pitches ->{'c'}->[0] = $lowest_a * 2 ** (3/12); # c is 3 half-steps higher than a
 # initialize all octaves with their A frequency
